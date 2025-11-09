@@ -10,13 +10,14 @@ Creating a game that can be seen as a token base game where the player can:
 
 ## Tasks D3.a
 
-- [ ] use Leaflet to center on the players location
-- [ ] Make grid cells on map
-- [ ] Shows the content/value of cells
-- [ ] Pick up and placCells cane tokens bu clicking
+- [x] use Leaflet to center on the players location
+- [x] Make grid cells on map
+- [x] Shows the content/value of cells using `luck()`
+- [ ] Pick up and placCells cane tokens by clicking
 - [ ] Token spawned using spawn function
 - [ ] Game determins player has sufficient token values in hand.
 
 ## Progress
 
 - Nov 6 – Created initial plan and task list for D3.a
+- Nov 8 - Started on the actual coding on creating the grid
