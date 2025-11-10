@@ -11,6 +11,16 @@ import "./_leafletWorkaround.ts"; // fixes for missing Leaflet images
 // Import our luck function
 import luck from "./_luck.ts";
 
+// Map zone constants
+const CLASSROOM_LATLNG = leaflet.latLng(
+  36.997936938057016,
+  -122.05703507501151,
+);
+const GAMEPLAY_ZOOM_LEVEL = 19;
+const TILE_DEGREES = 1e-4;
+const GRID_SIZE = 8;
+const INTERACTION_RANGE = 3;
+
 const controlPanelDiv = document.createElement("div");
 controlPanelDiv.id = "controlPanel";
 document.body.append(controlPanelDiv);
@@ -38,15 +48,6 @@ function updateHeldTokenDisplay() {
     heldTokenDisplay.innerHTML = "Not holding any token.";
   }
 }
-
-// Our classroom location
-const CLASSROOM_LATLNG = leaflet.latLng(
-  36.997936938057016,
-  -122.05703507501151,
-);
-const GAMEPLAY_ZOOM_LEVEL = 19;
-const TILE_DEGREES = 1e-4;
-const GRID_SIZE = 8;
 
 // Create the map (element with id "map" is defined in index.html)
 const mapElement = document.getElementById("map");
@@ -94,7 +95,7 @@ function drawGrid(i: number, j: number) {
 
   const key = `${i},${j}`;
   const distance = Math.max(Math.abs(i), Math.abs(j));
-  if (distance > 3) {
+  if (distance > INTERACTION_RANGE) {
     zone.bindTooltip("???");
     return;
   }
@@ -134,4 +135,3 @@ for (let i = -GRID_SIZE; i < GRID_SIZE; i++) {
     drawGrid(i, j);
   }
 }
-
