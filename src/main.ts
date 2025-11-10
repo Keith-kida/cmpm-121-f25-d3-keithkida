@@ -24,6 +24,21 @@ statusPanelDiv.id = "statusPanel";
 document.body.append(statusPanelDiv);
 statusPanelDiv.innerHTML = "point nashi";
 
+const heldTokenDisplay = document.createElement("div");
+heldTokenDisplay.id = "heldTokenDisplay";
+controlPanelDiv.append(heldTokenDisplay);
+
+function updateHeldTokenDisplay() {
+  if (heldToken !== null) {
+    heldTokenDisplay.innerHTML = `Holding token of value: ${heldToken}`;
+    if (heldToken >= 16) {
+      updateStatusPanel(`You have a powerful token (${heldToken})!`);
+    }
+  } else {
+    heldTokenDisplay.innerHTML = "Not holding any token.";
+  }
+}
+
 // Our classroom location
 const CLASSROOM_LATLNG = leaflet.latLng(
   36.997936938057016,
@@ -59,6 +74,13 @@ const playerMarker = leaflet.marker(CLASSROOM_LATLNG);
 playerMarker.bindTooltip("KIMI DA!");
 playerMarker.addTo(map);
 
+let heldToken: number | null = null;
+const tokens: Record<string, number> = {};
+
+function updateStatusPanel(message: string) {
+  statusPanelDiv.innerHTML = message;
+}
+
 // Add caches to the map by cell numbers
 function drawGrid(i: number, j: number) {
   const origin = CLASSROOM_LATLNG;
@@ -70,14 +92,39 @@ function drawGrid(i: number, j: number) {
   const zone = leaflet.rectangle(bounds, { color: "white", weight: 1 });
   zone.addTo(map);
 
+  const key = `${i},${j}`;
+  const distance = Math.max(Math.abs(i), Math.abs(j));
+  if (distance > 3) {
+    zone.bindTooltip("???");
+    return;
+  }
   // Use luck() to determine if the cell has a token
   const value = Math.floor(luck(`${i},${j}`) * 10);
-  if (value > 7) {
+
+  if (value > 2) {
+    tokens[key] = value;
     zone.bindTooltip(`Token: ${value}`);
   }
 
   zone.on("click", () => {
-    console.log(`Clicked cell ${i},${j}`);
+    const hasToken = tokens[key] !== undefined;
+
+    if (heldToken === null && hasToken) {
+      heldToken = tokens[key];
+      delete tokens[key];
+      zone.unbindTooltip();
+      updateStatusPanel(`Picked up token of value ${heldToken}`);
+      updateHeldTokenDisplay();
+    } else if (heldToken !== null && hasToken && tokens[key] === heldToken) {
+      tokens[key] = heldToken * 2;
+      zone.bindTooltip(`Token: ${tokens[key]}`);
+      updateStatusPanel(`Combined tokens! Created value ${tokens[key]}!`);
+      heldToken = null;
+      updateHeldTokenDisplay();
+    } else {
+      updateStatusPanel("No token to pick up here.");
+      updateHeldTokenDisplay();
+    }
   });
 }
 
