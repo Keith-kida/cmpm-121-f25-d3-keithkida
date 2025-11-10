@@ -18,7 +18,7 @@ const CLASSROOM_LATLNG = leaflet.latLng(
 );
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
-const GRID_SIZE = 8;
+const GRID_SIZE = 24;
 const INTERACTION_RANGE = 3;
 
 // UI Elements ------------------------------------------------------------------
