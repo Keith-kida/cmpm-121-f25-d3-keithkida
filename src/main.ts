@@ -68,6 +68,8 @@ function movePlayer(latOffset: number, lngOffset: number) {
   redrawGrid();
 }
 
+// create movement button event listeners
+
 document
   .getElementById("moveNorth")
   ?.addEventListener("click", () => movePlayer(1, 0));
@@ -134,6 +136,7 @@ const playerMarker = leaflet.marker(CLASSROOM_LATLNG);
 playerMarker.bindTooltip("Player");
 playerMarker.addTo(map);
 
+// center map on player movement
 map.on("moveend", () => {
   const center = map.getCenter();
   playerLat = center.lat;
