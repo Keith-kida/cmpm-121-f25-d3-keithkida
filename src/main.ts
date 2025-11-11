@@ -13,8 +13,8 @@ import luck from "./_luck.ts";
 
 // Map zone constants ------------------------------------------------------------------
 const CLASSROOM_LATLNG = leaflet.latLng(
-  36.997936938057016,
-  -122.05703507501151,
+  0,
+  0,
 );
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
@@ -65,6 +65,7 @@ function movePlayer(latOffset: number, lngOffset: number) {
   const newPosition = leaflet.latLng(playerLat, playerLng);
   playerMarker.setLatLng(newPosition);
   map.setView(newPosition);
+  redrawGrid();
 }
 
 document
@@ -98,6 +99,10 @@ function updateHeldTokenDisplay() {
   } else {
     heldTokenDisplay.innerHTML = "Not holding any token.";
   }
+
+  if (heldToken !== null && heldToken >= 32) {
+    updateStatusPanel("🎉 Victory!!! 🎉");
+  }
 }
 
 // Initialize the map ------------------------------------------------------------------
@@ -129,9 +134,17 @@ const playerMarker = leaflet.marker(CLASSROOM_LATLNG);
 playerMarker.bindTooltip("Player");
 playerMarker.addTo(map);
 
+map.on("moveend", () => {
+  const center = map.getCenter();
+  playerLat = center.lat;
+  playerLng = center.lng;
+  playerMarker.setLatLng(center);
+  redrawGrid();
+});
+
 // function to create grid and token logic ------------------------------------------------------------------
 function drawGrid(i: number, j: number) {
-  const origin = CLASSROOM_LATLNG;
+  const origin = leaflet.latLng(playerLat, playerLng);
   const bounds = leaflet.latLngBounds([
     [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
     [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
@@ -140,8 +153,12 @@ function drawGrid(i: number, j: number) {
   const zone = leaflet.rectangle(bounds, { color: "white", weight: 1 });
   zone.addTo(map);
 
-  const key = `${i},${j}`;
+  const key = `${Math.floor((origin.lat + i * TILE_DEGREES) / TILE_DEGREES)},${
+    Math.floor((origin.lng + j * TILE_DEGREES) / TILE_DEGREES)
+  }`;
   const distance = Math.max(Math.abs(i), Math.abs(j));
+
+  // If out of interaction range, show "???"
   if (distance > INTERACTION_RANGE) {
     zone.bindTooltip("???");
     return;
@@ -170,11 +187,28 @@ function drawGrid(i: number, j: number) {
       updateStatusPanel(`Combined tokens! Created value ${tokens[key]}!`);
       heldToken = null;
       updateHeldTokenDisplay();
+      if (tokens[key] >= 32) {
+        updateStatusPanel(`You crafted a high-value token (${tokens[key]})!`);
+      }
     } else {
       updateStatusPanel("No token to pick up here.");
       updateHeldTokenDisplay();
     }
   });
+}
+
+function redrawGrid() {
+  map.eachLayer((layer) => {
+    if (layer instanceof leaflet.Rectangle) {
+      map.removeLayer(layer);
+    }
+  });
+
+  for (let i = -GRID_SIZE; i < GRID_SIZE; i++) {
+    for (let j = -GRID_SIZE; j < GRID_SIZE; j++) {
+      drawGrid(i, j);
+    }
+  }
 }
 
 // Draw the grid ------------------------------------------------------------------

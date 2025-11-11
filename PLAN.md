@@ -18,6 +18,18 @@ Creating a game that can be seen as a token base game where the player can:
 - [x] Game determines player has sufficient token values in hand.
 - [x] Game enables player to double a token on a cell if holds token of same value and pays with it
 
+## Tasks D3.b
+
+- [x] Add movement buttons (North, South, East, West) that simulate player movement
+- [x] Update visible grid dynamically as player moves (spawn/despawn as needed)
+- [x] Center the map around the player’s current position instead of a fixed location
+- [x] Use a coordinate system anchored at (0,0)
+- [x] Allow player to move around the map and see new cells
+- [x] Only cells near the player are interactive
+- [x] Cells forget their state when they leave the screen (memoryless behavior)
+- [x] Player can craft higher-value tokens than before
+- [x] Game declares victory when player creates a token at or above a required threshold
+
 ## Progress
 
 - Nov 6 – Created initial plan and task list for D3.a
@@ -28,3 +40,9 @@ Creating a game that can be seen as a token base game where the player can:
   Combine equal tokens to double their value
   add a display to show how much the player's token has.
   Had the player only interact with cells close to them (up to 3 cells)
+- Nov 11 - the game allows:
+
+  - players to move up, down, left, and right.
+  - the map will always center on the player
+  - only interact with players with tokens near them
+  - declare game winner
