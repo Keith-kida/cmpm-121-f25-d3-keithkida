@@ -39,6 +39,47 @@ const heldTokenDisplay = document.createElement("div");
 heldTokenDisplay.id = "heldTokenDisplay";
 controlPanelDiv.append(heldTokenDisplay);
 
+// player control ----------------------------------------------------------------
+
+const movementInstructions = document.createElement("div");
+movementInstructions.id = "movementInstructions";
+movementInstructions.innerHTML = `<button id="moveNorth">North</button>
+    <button id="moveSouth">South</button>
+    <button id="moveEast">East</button>
+    <button id="moveWest">West</button>
+   <br/>
+   Use the buttons to move your player marker around the map.`;
+controlPanelDiv.append(movementInstructions);
+
+// Player position ------------------------------------------------------------------
+
+let playerLat = CLASSROOM_LATLNG.lat;
+let playerLng = CLASSROOM_LATLNG.lng;
+
+// player movement functions ------------------------------------------------------------------
+
+function movePlayer(latOffset: number, lngOffset: number) {
+  playerLat += latOffset * TILE_DEGREES;
+  playerLng += lngOffset * TILE_DEGREES;
+
+  const newPosition = leaflet.latLng(playerLat, playerLng);
+  playerMarker.setLatLng(newPosition);
+  map.setView(newPosition);
+}
+
+document
+  .getElementById("moveNorth")
+  ?.addEventListener("click", () => movePlayer(1, 0));
+document
+  .getElementById("moveSouth")
+  ?.addEventListener("click", () => movePlayer(-1, 0));
+document
+  .getElementById("moveEast")
+  ?.addEventListener("click", () => movePlayer(0, 1));
+document
+  .getElementById("moveWest")
+  ?.addEventListener("click", () => movePlayer(0, -1));
+
 // Game state ------------------------------------------------------------------
 let heldToken: number | null = null;
 const tokens: Record<string, number> = {};
