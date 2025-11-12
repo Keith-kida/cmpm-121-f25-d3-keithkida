@@ -43,12 +43,45 @@ controlPanelDiv.append(heldTokenDisplay);
 
 const movementInstructions = document.createElement("div");
 movementInstructions.id = "movementInstructions";
-movementInstructions.innerHTML = `<button id="moveNorth">North</button>
-    <button id="moveSouth">South</button>
-    <button id="moveEast">East</button>
-    <button id="moveWest">West</button>
-   <br/>
-   Use the buttons to move your player marker around the map.`;
+movementInstructions.innerHTML = `
+    <div style="
+      display: grid;
+      grid-template-columns: 60px 60px 60px;
+      grid-template-rows: 60px 60px 60px;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    ">
+    <button id="moveNorth" style="color: green; background-color: cyan; grid-column: 2; grid row: 1; width:60px; height:60px;">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <span>↑</span>
+        <span>North</span>
+      </div>
+    </button>
+
+    <button id="moveWest" style="color: green; background-color: cyan; grid-column: 1; grid row: 2; width:60px; height:60px;">
+      <div style="display: flex; flex-direction: row; align-items: center;">
+        <span>←</span>
+        <span>West</span>
+      </div>
+    </button>
+
+    <button id="moveEast" style="color: green; background-color: cyan; grid-column: 3; grid row: 2; width:60px; height:60px;">
+      <div style="display: flex; flex-direction: row; align-items: center;">
+        <span>East</span>
+        <span>→</span>
+      </div>
+    </button>
+
+    <button id="moveSouth" style="color: green; background-color: cyan; grid-column: 2; grid row: 3; width:60px; height:60px;">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <span>South</span>
+        <span>↓</span>
+      </div>
+    </button>
+    </div>
+  <br/>
+  Use the buttons to move your player marker around the map.`;
 controlPanelDiv.append(movementInstructions);
 
 // Player position ------------------------------------------------------------------
