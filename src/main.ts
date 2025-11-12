@@ -146,6 +146,8 @@ map.on("moveend", () => {
 });
 
 // function to create grid and token logic ------------------------------------------------------------------
+const gridLayer = leaflet.layerGroup().addTo(map);
+
 function drawGrid(i: number, j: number) {
   const origin = leaflet.latLng(playerLat, playerLng);
   const bounds = leaflet.latLngBounds([
@@ -154,7 +156,7 @@ function drawGrid(i: number, j: number) {
   ]);
 
   const zone = leaflet.rectangle(bounds, { color: "white", weight: 1 });
-  zone.addTo(map);
+  zone.addTo(gridLayer);
 
   const key = `${Math.floor((origin.lat + i * TILE_DEGREES) / TILE_DEGREES)},${
     Math.floor((origin.lng + j * TILE_DEGREES) / TILE_DEGREES)
@@ -168,7 +170,9 @@ function drawGrid(i: number, j: number) {
   }
 
   // Use luck() to determine if the cell has a token
-  const value = Math.floor(luck(`${i},${j}`) * 10);
+  const cellI = Math.floor(playerLat / TILE_DEGREES) + i;
+  const cellJ = Math.floor(playerLng / TILE_DEGREES) + j;
+  const value = Math.floor(luck(`${cellI},${cellJ}`) * 10);
 
   if (value > 2) {
     tokens[key] = value;
@@ -203,7 +207,7 @@ function drawGrid(i: number, j: number) {
 function redrawGrid() {
   map.eachLayer((layer) => {
     if (layer instanceof leaflet.Rectangle) {
-      map.removeLayer(layer);
+      gridLayer.clearLayers();
     }
   });
 
