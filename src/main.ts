@@ -230,6 +230,12 @@ function drawGrid(i: number, j: number) {
       if (tokens[key] >= 32) {
         updateStatusPanel(`You crafted a high-value token (${tokens[key]})!`);
       }
+    } else if (heldToken !== null && !hasToken) {
+      tokens[key] = heldToken;
+      zone.bindTooltip(`Token: ${tokens[key]}`);
+      updateStatusPanel(`Dropped token of value ${heldToken}`);
+      heldToken = null;
+      updateHeldTokenDisplay();
     } else {
       updateStatusPanel("No token to pick up here.");
       updateHeldTokenDisplay();
@@ -238,11 +244,7 @@ function drawGrid(i: number, j: number) {
 }
 
 function redrawGrid() {
-  map.eachLayer((layer) => {
-    if (layer instanceof leaflet.Rectangle) {
-      gridLayer.clearLayers();
-    }
-  });
+  gridLayer.clearLayers();
 
   for (let i = -GRID_SIZE; i < GRID_SIZE; i++) {
     for (let j = -GRID_SIZE; j < GRID_SIZE; j++) {
