@@ -105,7 +105,11 @@ function updateHeldTokenDisplay() {
   if (heldToken !== null) {
     heldTokenDisplay.innerHTML = `Holding token of value: ${heldToken}`;
     if (heldToken >= 16) {
-      updateStatusPanel(`You have a powerful token (${heldToken})!`);
+      updateStatusPanel(`You have a powerful token ${heldToken}!`);
+    }
+    if (heldToken >= 32) {
+      heldTokenDisplay.innerHTML =
+        `🎉VICTOY🎉You have an extremely powerful token ${heldToken}!`;
     }
   } else {
     heldTokenDisplay.innerHTML = "Not holding any token.";
@@ -209,8 +213,7 @@ function drawGrid(i: number, j: number) {
   if (cellMemory.has(key)) {
     value = cellMemory.get(key)!;
   } else {
-    const newToken = Math.random();
-    const newValue = Math.floor(luck(`${newToken}-${cellI},${cellJ}`) * 10);
+    const newValue = Math.floor(luck(`${cellI},${cellJ}`) * 10);
     if (newValue > 2) {
       value = newValue;
       cellMemory.set(key, value);
