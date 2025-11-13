@@ -108,8 +108,11 @@ function updateHeldTokenDisplay() {
       updateStatusPanel(`You have a powerful token ${heldToken}!`);
     }
     if (heldToken >= 32) {
-      heldTokenDisplay.innerHTML =
-        `🎉VICTORY🎉You have an extremely powerful token ${heldToken}!`;
+      heldTokenDisplay.innerHTML = `
+        <div style="font-size: 3rem; font-weight: 700; text-align: center;">
+          🎉 VICTORY  You have an extremely powerful token (${heldToken})!🎉
+        </div>
+      `;
     }
   } else {
     heldTokenDisplay.innerHTML = "Not holding any token.";
