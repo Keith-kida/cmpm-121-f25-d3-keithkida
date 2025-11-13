@@ -34,7 +34,7 @@ Creating a game that can be seen as a token base game where the player can:
 
 - [x] Use the "Flyweight pattern" to make sure cells not visible on the map do not require memory for storage
 - [x] Use the "Memento pattern" to preserve the state of modified cells when they scroll off-screen, and restore them when they return to view.
-- [x] Rebuild visible cells dynamically when moving instead of keeping them all loaded  
+- [x] Rebuild visible cells dynamically when moving instead of keeping them all loaded
 - [x] Have it maintain original game mechanics even after changing to memory storage
 
 ## Progress
@@ -60,4 +60,3 @@ Creating a game that can be seen as a token base game where the player can:
 - Nov 13 - The game:
   - uses no memory for unused cells on the map using "Flyweight pattern"
   - preserve the state of modified cells when they scroll off-screen using "Memento pattern"
-  
