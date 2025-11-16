@@ -39,6 +39,18 @@ const heldTokenDisplay = document.createElement("div");
 heldTokenDisplay.id = "heldTokenDisplay";
 controlPanelDiv.append(heldTokenDisplay);
 
+const newGameButton = document.createElement("button");
+newGameButton.innerText = "New Game";
+newGameButton.onclick = () => {
+  localStorage.removeItem("gameState");
+  cellMemory.clear();
+  heldToken = null;
+  playerLat = 0;
+  playerLng = 0;
+  redrawGrid();
+};
+document.body.append(newGameButton);
+
 // player control ----------------------------------------------------------------
 
 const movementInstructions = document.createElement("div");
@@ -96,6 +108,36 @@ let playerLng = CLASSROOM_LATLNG.lng;
 let heldToken: number | null = null;
 const cellMemory = new Map<string, number>();
 
+function saveGameState() {
+  const state = {
+    playerLat,
+    playerLng,
+    heldToken,
+    cellMemory: Array.from(cellMemory.entries()),
+  };
+  localStorage.setItem("gameState", JSON.stringify(state));
+}
+
+function loadGameState() {
+  const data = localStorage.getItem("gameState");
+  if (!data) return;
+
+  const state = JSON.parse(data);
+  playerLat = state.playerLat;
+  playerLng = state.playerLng;
+  heldToken = state.heldToken;
+  cellMemory.clear();
+
+  for (const [key, value] of state.cellMemory) {
+    cellMemory.set(key, value);
+  }
+}
+
+interface movementController {
+  start(): void;
+  stop(): void;
+}
+
 // Update functions ------------------------------------------------------------------
 function updateStatusPanel(message: string) {
   statusPanelDiv.innerHTML = message;
@@ -129,26 +171,82 @@ function movePlayer(latOffset: number, lngOffset: number) {
   playerMarker.setLatLng(newPosition);
   map.setView(newPosition);
   redrawGrid();
+  saveGameState();
 }
 
-// create movement button event listeners
+function movePlayerTo(lat: number, lng: number) {
+  playerLat = lat;
+  playerLng = lng;
 
-document.getElementById("moveNorth")?.addEventListener(
-  "click",
-  () => movePlayer(1, 0),
-);
-document.getElementById("moveSouth")?.addEventListener(
-  "click",
-  () => movePlayer(-1, 0),
-);
-document.getElementById("moveEast")?.addEventListener(
-  "click",
-  () => movePlayer(0, 1),
-);
-document.getElementById("moveWest")?.addEventListener(
-  "click",
-  () => movePlayer(0, -1),
-);
+  const newPosition = leaflet.latLng(playerLat, playerLng);
+  playerMarker.setLatLng(newPosition);
+  map.setView(newPosition);
+  redrawGrid();
+  saveGameState();
+}
+
+// Movement controllers ------------------------------------------------------------------
+
+class buttonMovementController implements movementController {
+  constructor(private moveToFn: (lat: number, lng: number) => void) {}
+
+  start() {
+    document.getElementById("moveNorth")?.addEventListener(
+      "click",
+      () => this.moveToFn(playerLat + TILE_DEGREES, playerLng),
+    );
+    document.getElementById("moveSouth")?.addEventListener(
+      "click",
+      () => this.moveToFn(playerLat - TILE_DEGREES, playerLng),
+    );
+    ``;
+    document.getElementById("moveEast")?.addEventListener(
+      "click",
+      () => this.moveToFn(playerLat, playerLng + TILE_DEGREES),
+    );
+    document.getElementById("moveWest")?.addEventListener(
+      "click",
+      () => this.moveToFn(playerLat, playerLng - TILE_DEGREES),
+    );
+  }
+
+  stop() {}
+}
+
+class geoMovementController implements movementController {
+  watchId: number | null = null;
+  private moveToFn: (lat: number, lng: number) => void;
+
+  constructor(moveToFn: (lat: number, lng: number) => void) {
+    this.moveToFn = moveToFn;
+  }
+
+  start() {
+    if (!navigator.geolocation) {
+      updateStatusPanel("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    this.watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        this.moveToFn(
+          position.coords.latitude,
+          position.coords.longitude,
+        );
+      },
+      (error) => {
+        updateStatusPanel(`Geolocation error: ${error.message}`);
+      },
+      { enableHighAccuracy: true },
+    );
+  }
+
+  stop() {
+    if (this.watchId !== null) {
+      navigator.geolocation.clearWatch(this.watchId);
+    }
+  }
+}
 
 // Initialize the map ------------------------------------------------------------------
 const mapElement = document.getElementById("map");
@@ -186,6 +284,17 @@ map.on("moveend", () => {
   playerMarker.setLatLng(center);
   redrawGrid();
 });
+
+function chooseMovementController(): movementController {
+  const urlParams = new URLSearchParams(globalThis.location.search);
+  const controllerType = urlParams.get("movement");
+
+  if (controllerType === "geo") {
+    return new geoMovementController(movePlayerTo);
+  } else {
+    return new buttonMovementController(movePlayer);
+  }
+}
 
 // function to create grid and token logic ------------------------------------------------------------------
 const gridLayer = leaflet.layerGroup().addTo(map);
@@ -277,4 +386,9 @@ function redrawGrid() {
 }
 
 // Draw the grid ------------------------------------------------------------------
+
+loadGameState();
 redrawGrid();
+
+const controller = chooseMovementController();
+controller.start();

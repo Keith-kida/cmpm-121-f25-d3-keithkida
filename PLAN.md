@@ -7,6 +7,10 @@ Creating a game that can be seen as a token base game where the player can:
 - See cells all the way to the edge of the map, but can only interact with cells near them
 - Pick up up to one token
 - Create new items with those tokens
+- Enables player to explore the map infinitely
+- Use memory to store the token value
+- Has a victory condition
+- Allow player to restart and continue for where they left off
 
 ## Tasks D3.a
 
@@ -37,6 +41,13 @@ Creating a game that can be seen as a token base game where the player can:
 - [x] Rebuild visible cells dynamically when moving instead of keeping them all loaded
 - [x] Have it maintain original game mechanics even after changing to memory storage
 
+## Tasks D3.d
+
+- [x] Use geolocation API to control player
+- [ ] Use localStorage API to persist game state across page loads
+- [ ] Player can continue gameplay from the same state by simply opening the page again, even if it was closed
+- [x] The player can switch between button-based and geolocation-based movement.
+
 ## Progress
 
 - Nov 6 – Created initial plan and task list for D3.a
@@ -60,3 +71,5 @@ Creating a game that can be seen as a token base game where the player can:
 - Nov 13 - The game:
   - uses no memory for unused cells on the map using "Flyweight pattern"
   - preserve the state of modified cells when they scroll off-screen using "Memento pattern"
+
+- Nov 15 -
