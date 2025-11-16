@@ -47,9 +47,13 @@ newGameButton.onclick = () => {
   heldToken = null;
   playerLat = 0;
   playerLng = 0;
+  saveGameState();
   redrawGrid();
+  loadingSavedGame = false;
 };
 document.body.append(newGameButton);
+
+let loadingSavedGame = false;
 
 // player control ----------------------------------------------------------------
 
@@ -122,6 +126,8 @@ function loadGameState() {
   const data = localStorage.getItem("gameState");
   if (!data) return;
 
+  loadingSavedGame = true;
+
   const state = JSON.parse(data);
   playerLat = state.playerLat;
   playerLng = state.playerLng;
@@ -131,6 +137,10 @@ function loadGameState() {
   for (const [key, value] of state.cellMemory) {
     cellMemory.set(key, value);
   }
+
+  const restoredPosition = leaflet.latLng(playerLat, playerLng);
+  playerMarker.setLatLng(restoredPosition);
+  map.setView(restoredPosition);
 }
 
 interface movementController {
@@ -188,25 +198,22 @@ function movePlayerTo(lat: number, lng: number) {
 // Movement controllers ------------------------------------------------------------------
 
 class buttonMovementController implements movementController {
-  constructor(private moveToFn: (lat: number, lng: number) => void) {}
-
   start() {
     document.getElementById("moveNorth")?.addEventListener(
       "click",
-      () => this.moveToFn(playerLat + TILE_DEGREES, playerLng),
+      () => movePlayer(1, 0),
     );
     document.getElementById("moveSouth")?.addEventListener(
       "click",
-      () => this.moveToFn(playerLat - TILE_DEGREES, playerLng),
+      () => movePlayer(-1, 0),
     );
-    ``;
     document.getElementById("moveEast")?.addEventListener(
       "click",
-      () => this.moveToFn(playerLat, playerLng + TILE_DEGREES),
+      () => movePlayer(0, 1),
     );
     document.getElementById("moveWest")?.addEventListener(
       "click",
-      () => this.moveToFn(playerLat, playerLng - TILE_DEGREES),
+      () => movePlayer(0, -1),
     );
   }
 
@@ -215,11 +222,8 @@ class buttonMovementController implements movementController {
 
 class geoMovementController implements movementController {
   watchId: number | null = null;
-  private moveToFn: (lat: number, lng: number) => void;
 
-  constructor(moveToFn: (lat: number, lng: number) => void) {
-    this.moveToFn = moveToFn;
-  }
+  constructor(private moveToFn: (lat: number, lng: number) => void) {}
 
   start() {
     if (!navigator.geolocation) {
@@ -277,13 +281,6 @@ playerMarker.bindTooltip("Player");
 playerMarker.addTo(map);
 
 // center map on player movement --------------------------------------------------------------
-map.on("moveend", () => {
-  const center = map.getCenter();
-  playerLat = center.lat;
-  playerLng = center.lng;
-  playerMarker.setLatLng(center);
-  redrawGrid();
-});
 
 function chooseMovementController(): movementController {
   const urlParams = new URLSearchParams(globalThis.location.search);
@@ -292,7 +289,7 @@ function chooseMovementController(): movementController {
   if (controllerType === "geo") {
     return new geoMovementController(movePlayerTo);
   } else {
-    return new buttonMovementController(movePlayer);
+    return new buttonMovementController();
   }
 }
 
@@ -309,69 +306,88 @@ function drawGrid(i: number, j: number) {
   const zone = leaflet.rectangle(bounds, { color: "white", weight: 1 });
   zone.addTo(gridLayer);
 
-  // Use luck() to determine if the cell has a token
   const cellI = Math.floor(playerLat / TILE_DEGREES) + i;
   const cellJ = Math.floor(playerLng / TILE_DEGREES) + j;
   const key = `${cellI},${cellJ}`;
   const distance = Math.max(Math.abs(i), Math.abs(j));
 
-  // If out of interaction range, show "???"
+  // Outside range = hidden
   if (distance > INTERACTION_RANGE) {
     zone.bindTooltip("???");
     return;
   }
 
-  let value: number | null = null;
   if (cellMemory.has(key)) {
-    value = cellMemory.get(key)!;
-  } else {
+    const value = cellMemory.get(key)!;
+    zone.bindTooltip(`${value}`, { permanent: true, direction: "center" });
+  } else if (!loadingSavedGame) {
     const newValue = Math.floor(luck(`${cellI},${cellJ}`) * 10);
     if (newValue > 2) {
-      value = newValue;
-      cellMemory.set(key, value);
+      cellMemory.set(key, newValue);
+      zone.bindTooltip(`${newValue}`, { permanent: true, direction: "center" });
+    } else {
+      zone.bindTooltip("Empty");
     }
-  }
-
-  if (value !== null) {
-    zone.bindTooltip(`${value}`, { permanent: true, direction: "center" });
   } else {
     zone.bindTooltip("Empty");
   }
 
+  // Interaction logic
   zone.on("click", () => {
     const currentValue = cellMemory.get(key) ?? null;
 
+    // generate token using luck()
+    if (currentValue === null && heldToken === null) {
+      const newValue = Math.floor(luck(`${cellI},${cellJ}`) * 10);
+      if (newValue > 2) {
+        cellMemory.set(key, newValue);
+        zone.bindTooltip(`${newValue}`, {
+          permanent: true,
+          direction: "center",
+        });
+        saveGameState();
+      }
+      return;
+    }
+
+    // pick up token
     if (heldToken === null && currentValue !== null) {
       heldToken = currentValue;
       cellMemory.delete(key);
       zone.unbindTooltip();
-      updateStatusPanel(`Picked up token of value ${heldToken}`);
       updateHeldTokenDisplay();
+      updateStatusPanel(`Picked up token of value ${heldToken}`);
+      saveGameState();
       return;
-    } else if (heldToken !== null && currentValue === heldToken) {
+    }
+
+    // combine tokens
+    if (heldToken !== null && currentValue === heldToken) {
       const combined = heldToken * 2;
       cellMemory.set(key, combined);
       zone.bindTooltip(`${combined}`, { permanent: true, direction: "center" });
-      updateStatusPanel(`Combined tokens! Created value ${combined}!`);
       heldToken = null;
       updateHeldTokenDisplay();
-      if (combined >= 32) {
-        updateStatusPanel(`You crafted a high-value token (${combined})!`);
-      }
+      updateStatusPanel(`Combined tokens! New value ${combined}`);
+      saveGameState();
       return;
-    } else if (heldToken !== null && currentValue === null) {
+    }
+
+    // drop token
+    if (heldToken !== null && currentValue === null) {
       cellMemory.set(key, heldToken);
       zone.bindTooltip(`${heldToken}`, {
         permanent: true,
         direction: "center",
       });
-      updateStatusPanel(`Dropped token of value ${heldToken}`);
       heldToken = null;
       updateHeldTokenDisplay();
-    } else {
-      updateStatusPanel("No token to pick up here.");
-      updateHeldTokenDisplay();
+      updateStatusPanel(`Dropped token.`);
+      saveGameState();
+      return;
     }
+
+    updateStatusPanel("Cannot interact with this cell.");
   });
 }
 
