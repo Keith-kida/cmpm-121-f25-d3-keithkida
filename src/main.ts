@@ -47,9 +47,9 @@ newGameButton.onclick = () => {
   heldToken = null;
   playerLat = 0;
   playerLng = 0;
+  loadingSavedGame = false;
   saveGameState();
   redrawGrid();
-  loadingSavedGame = false;
 };
 document.body.append(newGameButton);
 
