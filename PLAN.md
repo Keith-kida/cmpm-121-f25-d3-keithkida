@@ -44,8 +44,8 @@ Creating a game that can be seen as a token base game where the player can:
 ## Tasks D3.d
 
 - [x] Use geolocation API to control player
-- [ ] Use localStorage API to persist game state across page loads
-- [ ] Player can continue gameplay from the same state by simply opening the page again, even if it was closed
+- [x] Use localStorage API to persist game state across page loads
+- [x] Player can continue gameplay from the same state by simply opening the page again, even if it was closed
 - [x] The player can switch between button-based and geolocation-based movement.
 
 ## Progress
