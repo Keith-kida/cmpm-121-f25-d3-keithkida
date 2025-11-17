@@ -48,6 +48,10 @@ newGameButton.onclick = () => {
   playerLat = 0;
   playerLng = 0;
   loadingSavedGame = false;
+
+  const newPos = leaflet.latLng(playerLat, playerLng);
+  playerMarker.setLatLng(newPos);
+  map.setView(newPos);
   saveGameState();
   redrawGrid();
 };
@@ -110,7 +114,7 @@ let playerLng = CLASSROOM_LATLNG.lng;
 
 // Game state ------------------------------------------------------------------
 let heldToken: number | null = null;
-const cellMemory = new Map<string, number>();
+const cellMemory = new Map<string, number | null>();
 
 function saveGameState() {
   const state = {
@@ -280,6 +284,14 @@ const playerMarker = leaflet.marker(CLASSROOM_LATLNG);
 playerMarker.bindTooltip("Player");
 playerMarker.addTo(map);
 
+map.on("moveend", () => {
+  const center = map.getCenter();
+  playerLat = center.lat;
+  playerLng = center.lng;
+  playerMarker.setLatLng(center);
+  redrawGrid();
+});
+
 // center map on player movement --------------------------------------------------------------
 
 function chooseMovementController(): movementController {
@@ -312,24 +324,31 @@ function drawGrid(i: number, j: number) {
   const distance = Math.max(Math.abs(i), Math.abs(j));
 
   // Outside range = hidden
+
+  if (!cellMemory.has(key)) {
+    const newValue = Math.floor(luck(`${cellI},${cellJ}`) * 10);
+    if (newValue > 2) {
+      cellMemory.set(key, newValue);
+    } else {
+      cellMemory.set(key, null);
+    }
+
+    if (!loadingSavedGame) saveGameState();
+  }
+
+  const stored = cellMemory.get(key);
+
+  // Outside range → hide contents
   if (distance > INTERACTION_RANGE) {
     zone.bindTooltip("???");
     return;
   }
 
-  if (cellMemory.has(key)) {
-    const value = cellMemory.get(key)!;
-    zone.bindTooltip(`${value}`, { permanent: true, direction: "center" });
-  } else if (!loadingSavedGame) {
-    const newValue = Math.floor(luck(`${cellI},${cellJ}`) * 10);
-    if (newValue > 2) {
-      cellMemory.set(key, newValue);
-      zone.bindTooltip(`${newValue}`, { permanent: true, direction: "center" });
-    } else {
-      zone.bindTooltip("Empty");
-    }
-  } else {
+  // Inside range → show real contents
+  if (stored === null) {
     zone.bindTooltip("Empty");
+  } else {
+    zone.bindTooltip(`${stored}`, { permanent: true, direction: "center" });
   }
 
   // Interaction logic
@@ -353,7 +372,7 @@ function drawGrid(i: number, j: number) {
     // pick up token
     if (heldToken === null && currentValue !== null) {
       heldToken = currentValue;
-      cellMemory.delete(key);
+      cellMemory.set(key, null);
       zone.unbindTooltip();
       updateHeldTokenDisplay();
       updateStatusPanel(`Picked up token of value ${heldToken}`);
