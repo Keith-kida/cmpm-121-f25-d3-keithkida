@@ -112,6 +112,9 @@ controlPanelDiv.append(movementInstructions);
 let playerLat = CLASSROOM_LATLNG.lat;
 let playerLng = CLASSROOM_LATLNG.lng;
 
+let lastCellI = 0;
+let lastCellJ = 0;
+
 // Game state ------------------------------------------------------------------
 let heldToken: number | null = null;
 const cellMemory = new Map<string, number | null>();
@@ -177,6 +180,12 @@ function updateHeldTokenDisplay() {
 
 // player movement functions ------------------------------------------------------------------
 
+function latLngToCell(lat: number, lng: number) {
+  const cellI = Math.floor(lat / TILE_DEGREES);
+  const cellJ = Math.floor(lng / TILE_DEGREES);
+  return [cellI, cellJ];
+}
+
 function movePlayer(latOffset: number, lngOffset: number) {
   playerLat += latOffset * TILE_DEGREES;
   playerLng += lngOffset * TILE_DEGREES;
@@ -191,6 +200,13 @@ function movePlayer(latOffset: number, lngOffset: number) {
 function movePlayerTo(lat: number, lng: number) {
   playerLat = lat;
   playerLng = lng;
+
+  const [cellI, cellJ] = latLngToCell(lat, lng);
+
+  if (cellI !== lastCellI || cellJ !== lastCellJ) {
+    lastCellI = cellI;
+    lastCellJ = cellJ;
+  }
 
   const newPosition = leaflet.latLng(playerLat, playerLng);
   playerMarker.setLatLng(newPosition);
