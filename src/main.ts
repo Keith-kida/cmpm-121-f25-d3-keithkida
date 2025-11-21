@@ -435,19 +435,42 @@ function redrawGrid() {
   }
 }
 
-// Draw the grid ------------------------------------------------------------------
+// === FINAL SETUP: Load, detect, and start ===
+console.log("🚀 Game initializing...");
+updateStatusPanel("Initializing map...");
 
-loadGameState();
-redrawGrid();
+map.whenReady(() => {
+  console.log("🗺️ Map is ready");
+  updateStatusPanel("Map loaded. Preparing gameplay...");
 
-const controller = chooseMovementController();
-if (controller instanceof geoMovementController) {
-  // Wait for user interaction before starting
-  map.once("click", () => {
+  // Load saved state
+  loadGameState();
+
+  // Redraw grid
+  redrawGrid();
+
+  // Choose movement mode
+  const controller = chooseMovementController();
+  console.log("🎛️ Controller type:", controller.constructor.name);
+  updateStatusPanel(`Mode: ${controller.constructor.name}. Tap to start.`);
+
+  // Start appropriate controller
+  if (controller instanceof geoMovementController) {
+    // Wait for user tap/click to activate GPS (required by browsers)
+    map.once("click", () => {
+      console.log("🖱️ User clicked map — starting geo...");
+      updateStatusPanel("Starting GPS... (check browser permissions)");
+      setTimeout(() => {
+        try {
+          controller.start();
+        } catch (err) {
+          console.error("💥 Geo start failed:", err);
+          updateStatusPanel("GPS failed to start. See console.");
+        }
+      }, 100);
+    });
+  } else {
     controller.start();
-    updateStatusPanel("Using real-world geolocation...");
-  });
-  updateStatusPanel("Click the map to enable GPS movement.");
-} else {
-  controller.start();
-}
+    updateStatusPanel("Button controls active.");
+  }
+});
