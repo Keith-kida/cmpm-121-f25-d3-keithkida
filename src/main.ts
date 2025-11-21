@@ -441,4 +441,13 @@ loadGameState();
 redrawGrid();
 
 const controller = chooseMovementController();
-controller.start();
+if (controller instanceof geoMovementController) {
+  // Wait for user interaction before starting
+  map.once("click", () => {
+    controller.start();
+    updateStatusPanel("Using real-world geolocation...");
+  });
+  updateStatusPanel("Click the map to enable GPS movement.");
+} else {
+  controller.start();
+}
