@@ -253,13 +253,16 @@ class geoMovementController implements movementController {
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
-        this.moveToFn(
-          position.coords.latitude,
-          position.coords.longitude,
-        );
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        movePlayerTo(lat, lng);
+        map.panTo([lat, lng]);
+        redrawGrid();
+        saveGameState();
       },
       (error) => {
-        updateStatusPanel(`Geolocation error: ${error.message}`);
+        updateStatusPanel(`Geo error: ${error.message}`);
       },
       { enableHighAccuracy: true },
     );
